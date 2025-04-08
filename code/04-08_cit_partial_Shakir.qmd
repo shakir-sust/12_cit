@@ -103,7 +103,7 @@ Pros:
   
 Cons:  
   - Can have higher bias [very prone to overfitting, but we have to try our best to train it]  
-  - Potentially lower predictive power: any observation matching a given condition will be predicted as the mean of the terminal node.    
+  - Potentially lower predictive power: any observation matching a given condition will be predicted as the mean of the terminal node. [Although on the training set, we see the variability (expressed as error caps) around each of the boxplot at the terminal node, but if we use this model for prediction, each of those conditions will give you a prediction of the *mean* of the boxplot, basically on the prediction it ignores the variability that we see around the error caps/bars of the boxplot]   
   
     
 # Setup  
@@ -111,9 +111,9 @@ Cons:
 #| message: false
 #| warning: false
 
-install.packages("partykit")
-install.packages("finetune")
-install.packages("bonsai")
+#install.packages("partykit") #one of the packages that implements conditional inference tree on R (there are more packages)
+#install.packages("finetune") #to fine tune hyperparameters specific to conditional inference tree model
+#install.packages("bonsai") #to fine tune hyperparameters specific to conditional inference tree model
 
 library(tidymodels)
 library(tidyverse)
