@@ -145,7 +145,8 @@ set.seed(931735)
 # Setting split level  
 weather_split <- initial_split(weather, 
                                prop = .7,
-                               strata = strength_gtex)
+                               strata = strength_gtex #to do stratified sampling on "strength_gtex" to make sure that we have a similar distribution of predicted variable across training and testing 
+                               )
 
 weather_split
 ```
