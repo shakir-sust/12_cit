@@ -91,15 +91,15 @@ So, how can we control the simplicity/complexity of the tree?
 **Training a model by fine-tuning its hyper-parameters**.
 
 There will be 2 main hyperparameters that we will fine-tune:  
-  - **maximum depth**: maximum (vertical) depth of the tree
+  - **maximum depth**: maximum (vertical) depth of the tree (i.e., maximum layer of the tree i.e., how many horizontal layers are stuck on top on each other)
   - **minimum criterion**:  the value of (1 - p-value) that must be exceeded in order to implement a split
      
 ## Pros vs. cons of CIT  
 Pros:  
-  - Non-parametric [does not assume any specific distribution of data: residual normality] 
-  - It can model non-linear relationships  
-  - The model created is a decision tree, very easy to interpret [very simple model, which is very easy to interpret]  
-  - Can be used with both numerical and categorical response variables  
+  - Non-parametric [does not assume any specific distribution of data i.e., no need to satisfy the assumptions of residual normality, independence, equal variance] 
+  - It can model non-linear relationships [It can model both linear and non-linear relationships] 
+  - The model created is a decision tree, very easy to interpret [One of the biggest pros of CIT (conditional inference tree) model is that it is creating 1 single tree that is highly interpretable. It's a very simple model, and highly interpretable. A lot of time there is a trade-off between a model complexity and model interpretability. Models that are really complex, they may be the best at predicting, but they can also be very difficult to interpret. With CIT (conditional inference tree), the model is really simple so it is easy to interpret.]  
+  - Can be used with both numerical and categorical response variables  [as compared to elastic net, which works with only numerical response variable]
   
 Cons:  
   - Can have higher bias [very prone to overfitting]  
