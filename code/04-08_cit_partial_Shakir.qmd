@@ -307,7 +307,9 @@ Here's how it works:
 In the algorithm below, we are asking for 50 iterations.  
 
 ```{r cit_grid_result}
+
 set.seed(76544)
+
 cit_grid_result <- tune_sim_anneal(
   object = cit_spec,
   preprocessor = weather_recipe,
@@ -316,13 +318,17 @@ cit_grid_result <- tune_sim_anneal(
   iter = 50
 )
 
+cit_grid_result$.metrics[[2]]
+
 ```
+
 Notice how we have a column for iterations.  
 The first iteration uses a sensible value for the hyper-parameters, and then starts "walking" the parameter space in the direction of greatest improvement.  
 
 Let's collect a summary of metrics (across all folds, for each iteration), and plot them.  
 
-Firs, RMSE (lower is better):
+Firs, RMSE (lower is better):  
+
 ```{r RMSE}
 cit_grid_result %>%
   collect_metrics() %>%
