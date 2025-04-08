@@ -102,7 +102,7 @@ Pros:
   - Can be used with both numerical and categorical response variables  [as compared to elastic net, which works with only numerical response variable]
   
 Cons:  
-  - Can have higher bias [very prone to overfitting]  
+  - Can have higher bias [very prone to overfitting, but we have to try our best to train it]  
   - Potentially lower predictive power: any observation matching a given condition will be predicted as the mean of the terminal node.    
   
     
