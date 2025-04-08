@@ -11,7 +11,7 @@ Our learning objectives are to:
     - train a cit model 
     - evaluate model predictability 
   - Explore a few new concepts:  
-    - Iterative search with **simulated annealing**  
+    - Iterative search with **simulated annealing** (instead of fixed grid)  
     - Selecting **best model within 1 sd**  
     
 
@@ -24,11 +24,14 @@ The methods we mentioned to overcome multicollinearity include:
     - by hand [field-specific expertise]
     - by models  
 
-Today, we'll explore another model that performs variable selection, but in a different way: **conditional inference trees (CIT)**.  
+Today, we'll explore another model that performs variable selection, but in a different way: **conditional inference trees (CIT)**.
+
+[ What is porting a model? 
+Answer: We are training these models here with intentions that we can make predictions. So, if we want to deploy our model on a dashboard to allow other people to upload their data  to get a prediction, that would be porting our model (now that we have trained our model, we want to make it available for other to upload their data and get a prediction -- that would be porting a model; that would be basically we deploying our model) ]
 
 ## CIT 
 Conditional inference tree is a recursive model that works iteratively performing 2 steps:  
-  - **variable selection**  
+  - **variable selection**  [i.e., selecting a predictor variable in relation to our predicted variable]
   - **binary split**  
   
 It performs **variable selection** by first running all possible bivariate models between the response variable (e.g., strength_gtex) and each individual explanatory variable (e.g., sum_precip.mm_June), in the form of **strength_gtex ~ sum_precip.mm_June**. Then, it selects the explanatory variable with the **lowest p-value** as the most important.  
@@ -37,17 +40,28 @@ After it selects the most important variable, it performs a **binary split** on 
 
 After making the first split, it performs a new iteration on each of the splits, performing again variable selection and binary split.  
 
-The tree stops growing (stops iterating) when it reaches a given stopping criteria, as for example, maximum tree depth.    
+[Note: If you imagine this tree could grow indefinitely, until we basically have 1 observation per terminal node (where the tree stops growing -- the bottom nodes with boxplots), this tree can be very very very complex, which will create an issue of overfitting. So we need to find a way to allow this tree to grow just enough, but not excessively enough, we don't want it to overfit. Remember the bias-variance trade-off? This is a model that is very easy to allow it to be too complex. We want to make sure that it's complex enough, but not more complex than needed.]
+
+The tree stops growing (stops iterating) when it reaches a given stopping criteria, as for example, maximum tree depth (= how many layers the tree is gonna have).    
+
 
 Let's look into how it works, with figures.  
 
 ![](https://ars.els-cdn.com/content/image/1-s2.0-S0378429021002331-gr5.jpg)
+[Very important note: In conditional inference tree, Whatever grain yield data point on the terminal node that matches a specific predictor variable conditions, if we were to make a prediction based on this model, the prediction will be the mean of the boxplot of that terminal node regardless the yield were higher or lower. As long as the predictor variables match that pattern, the prediction that the model is gonna give you is the mean of the boxplot of that particular terminal node. It's always gonna give you the same predictions even if our predictor variables are slightly changing but still matching the same internal conditions. ]
+
 Terminology:  
   - **Root node**: node on top, with all observations (Rain_Cum)    
   - **Internal node**: all intermediate nodes (e.g., Flag_Leaf_Fungi)    
   - **Leaf/terminal node**: the bottom nodes with the boxplots  
   
 Variables selected first (on top) are more important than variables selected afterwards. In this example, the most important variable in explaining grain yield is **Rain_Cum**.  
+
+[Very important note:
+Conditional inference tree model is not prone to multicollinearity because even though it is a multivariate analysis, it is doing variable selection on a bivariate relationship. So, it runs all bivariate relationships at each step and never runs a multivariate model in the sense that the predicted variable (e.g., fiber strength) is explained by all the predictor variables (e.g., all 73 weather variables). Instead, the predicted variable (fiber strength) is explained by each individual predictor variable separately, choosing the one with the lowest p-value, and then doing binary split. That is how this Conditional inference tree model remedies multicollinearity. Even though the ensamble of it is a multivariate model, but the individual pieces of the tree are all derived from a bivariate relationship.]
+
+[Is having too many internal/terminal nodes a good thing, or bad thing?
+Answer: bad thing, because it will lead to overfitting]
 
 ## Creating partitions  
 Let's look into a simpler example where we are predicting y as a function of x.  
