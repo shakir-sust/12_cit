@@ -202,9 +202,10 @@ You can find all available recipe step options here: https://tidymodels.github.i
 
 Different model types require different processing steps.  
 Let's check what steps are required for an elastic net model (linear_reg).
-We can search for that in this link: https://www.tmwr.org/pre-proc-table  
+We can search for that in this link: https://www.tmwr.org/pre-proc-table  [in the Table A.1, we see that the decision_tree() does not require any preprocessing methods (e.g., dummy, zv, impute, decorrelate, normalize, transform). So, we don't have to do any of these preprocessing steps. However, we still want to remove the predictor variables from our data set that are outside of the growing season of cotton. Notice that pre-processing steps differ from model to model, so "recipe' steps will be model-specific.]
 
-> Differently from elastic net, variables do not need to be normalized in conditional inference tree, so we'll skip this step  
+> Differently from elastic net, variables do not need to be normalized in conditional inference tree, so we'll skip this step
+
 
 ```{r weather_recipe}
 weather_recipe <-
