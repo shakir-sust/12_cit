@@ -384,6 +384,8 @@ cit_grid_result %>%
   labs(title = "RMSE")
 ```
 
+We want to minimize the RMSE.
+
 What tree_depth and min criterion values created lowest RMSE?  
 
 Now, let's look into R2 (higher is better):  
