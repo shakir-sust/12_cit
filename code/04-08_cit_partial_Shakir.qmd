@@ -210,10 +210,10 @@ We can search for that in this link: https://www.tmwr.org/pre-proc-table  [in th
 ```{r weather_recipe}
 weather_recipe <-
   # Defining predicted and predictor variables
-  recipe(strength_gtex ~ .,
-         data = weather_train) %>%
+  recipe(strength_gtex ~ ., # . is used to indicate all predictor variables should be included in the model (we have 73 predictor variables in this data set) #everything on the left of ~ is/are outcome(s), and everything in the right side of ~ are predictors
+         data = weather_train) %>% #note that we are using the training data in this recipe
   # Removing year and site  
-    step_rm(year, site, matches("Jan|Feb|Mar|Apr|Nov|Dec")) #%>%
+    step_rm(year, site, matches("Jan|Feb|Mar|Apr|Nov|Dec")) #%>% #rm in step_rm() stands for remove #although we could have used dplyr::select, but we used step_rm() because it is within the scope of "recipes" #we want to remove year and site from our training set #matches("Jan|Feb|Mar|Apr|Nov|Dec"): to remove weather variables that represent data outside of the growing season: Jan, Feb, Mar, Apr, Nov, Dec  #matches("Jan|Feb|Mar|Apr|Nov|Dec"): to remove all columns that have these months (Jan, Feb, Mar, Apr, Nov, Dec) as part of their (column) names
   # Normalizing all numeric variables except predicted variable
   #step_normalize(all_numeric(), -all_outcomes())
 
@@ -224,7 +224,7 @@ Now that we have our recipe ready, we **need to apply it** to the training data 
 
 ```{r weather_prep}
 weather_prep <- weather_recipe %>%
-  prep()
+  prep() #prep(): to prepare the recipe
 
 weather_prep
 ```
@@ -237,18 +237,20 @@ Now, we're ready to start the model training process!
 First, let's specify:  
   - the **type of model** we want to train  
   - which **engine** we want to use  
-  - which **mode** we want to use [regression or classification] 
+  - which **mode** we want to use [regression (when response/predicted y variable is numerical) or classification (when response/predicted y variable is categorical)] 
 
 > Elastic nets can only be run for a numerical response variable. CITs can be run with either numerical (regression) or categorical (classification) explanatory variable. Therefore, we have the need to specify the mode here.
 
 Conditional inference tree **hyperparameters**:  
-  - **tree_depth**: maximum depth of the tree    
-  - **mincriterion**: the value of (1 - p-value) that must be exceeded in order to implement a split  
-    - **min_n**: minimum number of data points in a node that are required for the node to be split further  
+  - **tree_depth**: maximum depth of the tree (i.e., maximum layer of the tree; so we are basically allowing the tree to grow to different depths, and see which depth is gonna give us the best model)   
+  - **mincriterion**: the value of (1 - p-value) that must be exceeded in order to implement a split  (Let's say, we only want to allow variabels having p-value less than 0.05 to enter the model, then our mincriteroin would be (1 - 0.05) = 0.95 [inverse of p-value] that must be exceeded in order to implement a split)
+    - **min_n**: minimum number of data points in a node that are required for the node to be split further [Let's say, we are training our tree, and there is an internal node that has 3 variables in the internal node. If our "min_n" is 5, that node is not allowed to split anymore.]   
 
 Let's create a model specification that will **fine-tune** the first two for us.
 
 A given model type can be fit with different engines (e.g., through different packages). Here, we'll use the **partykit** engine/package.  
+
+[Note: We determine the model type, then we determine the engine, and (for cit) then we determine the mode. What we mean by engine here is that even though we have a given model type (cit, in this case), there are different packages in R that will do the same analysis. For example, if we use another package called "rpart", that package is very similar to "partykit" (which we are using here), uses R2 as the metric to select variables rather than p-value (as in partykit). So, there are some differences on what fit metrics (e.g., p-value, or R2) each package use to conduct variable selection. In this case, we are using "partykit" engine.]        
   
 ```{r cit_spec}
 cit_spec  <- 
