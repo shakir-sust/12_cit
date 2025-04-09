@@ -253,17 +253,22 @@ A given model type can be fit with different engines (e.g., through different pa
 [Note: We determine the model type, then we determine the engine, and (for cit) then we determine the mode. What we mean by engine here is that even though we have a given model type (cit, in this case), there are different packages in R that will do the same analysis. For example, if we use another package called "rpart", that package is very similar to "partykit" (which we are using here), uses R2 as the metric to select variables rather than p-value (as in partykit). So, there are some differences on what fit metrics (e.g., p-value, or R2) each package use to conduct variable selection. In this case, we are using "partykit" engine.]        
   
 ```{r cit_spec}
+
 cit_spec  <- 
   # Specifying cit as our model type, asking to tune the hyperparameters
-  decision_tree(tree_depth = tune()) %>%
+  decision_tree(tree_depth = tune()) %>% #tree depth is the hyperparameter we are gonna fine tune, and because we are gonna fine tune, we are not gonna mention any number inside the "tune()" function as a placeholder to tell the training step of this process is to say that hey, we want to fine tune "tree_depth". If we indicated any particular value inside "tune()", it would not fine tune, and would just use that value. E.g., if we indicated 10, it would use 10
     # Specify the engine
-  set_engine("partykit",
+  set_engine("partykit", #to specify what package we want to use for the implementation of CIT
              conditional_min_criterion = tune()
              ) %>%
     # Specifying mode
-  set_mode("regression")
+  set_mode("regression") #because CIT can handle both numerical and categorical type of predicted/response variable, we need to specify the mode as "regression" since our predicted/response variable is numerical
+
+#One thing that is different in CIT from elastic net is that the model type was linear_reg() [for linear regression], and both of the hyperparameters that we were fine tuning (penalty, mixture) were at the level of fine type function (i.e., inside linear_regression() function). But for CIT, the "conditional_min_criterion" hyperparameter are specific to the "partykit" engine, because of that we will tell the model to fine tune "conditional_min_criterion" hyperparameter at the set_engine() level instead of the model type level (i.e., inside "decision_tree()" function) as we did in the elastic net
+#that's why we need to fine tune this"conditional_min_criterion" hyperparameter inside the set_engine() function by using the "conditional_min_criterion" argument as "conditional_min_criterion = tune()"
 
 cit_spec
+
 ```
 
 Notice how the main arguments above do not have a value **yet**, because they will be tuned.  
@@ -279,7 +284,10 @@ For our iterative search, we need:
   - Our **resampling strategy** (don't have yet)  
   - **Parameter information** (don't have yet)      
   
+[Resampling strategy is basically on your train set -- we use only the train set to find the best combinations of hyperparameters. To do that, we have to further split our train set into analysis set (for training) and assessment set (for validation set) through resmapling methods (e.g., v-fold cross-validation). For each resample, models with given hyperparameter values are fit independently on the analysis set and evaluated on the assessment set. Some common resampling methods are:  V-fold cross-validation, Leave-one-out cross-validation, Bootstrapping 
+
 Let's define our resampling strategy below, using a (v-fold cross-validation, with v = 10) 10-fold cross validation approach:  
+
 ```{r resampling_foldcv}
 set.seed(34549)
 resampling_foldcv <- vfold_cv(weather_train, 
@@ -289,6 +297,11 @@ resampling_foldcv
 resampling_foldcv$splits[[1]]
 resampling_foldcv$splits[[2]]
 ```
+
+In the output, we have 10 folds. The whole training data was split into 10 parts, then each one of these folds have 9 parts for training and 1 part for testing. And every single fold has a different part testing i.e., whatever testing part was on the 1st fold, it goes back to the other 9 folds, and 1 of the other 0 folds comes back out to the 2nd fold, and so on.   
+
+On the output for the 1st fold ( resampling_foldcv$splits[[1]] ), notice that 487 is the total number of observations on the 1st fold which is the total number of data in our training set. And 1st fold has 438 rows (of those 487 total rows) are on the (analysis/) training and 49 are on the assessment. Then it does this for all the 10 folds.  
+
 On each fold, we'll use **438** observations for training and **49** observations to assess performance.    
 
 Now, let's define our parameter information.  
@@ -296,17 +309,25 @@ Now, let's define our parameter information.
 We need to create this object because engine-specific hyperparameters have a missing object, and it is required to be not missing to perform simulated annealing.  
 
 ```{r cit_param}
+
+#For CIT, we have to do this extra step so we can fine tune the CIT engine (= "partykit") specific hyperparameters: (1) tree_depth , (2) mincriterion, (3) min_n
+
+#tree_depth (maximum depth of the tree i.e., maximum layer of the tree; so we are basically allowing the tree to grow to different depths, and see which depth is gonna give us the best model), mincriterion (the value of (1 - p-value) that must be exceeded in order to implement a split), min_n (minimum number of data points in a node that are required for the node to be split further)
+
 cit_param <- cit_spec %>%
   extract_parameter_set_dials() %>%
-  update(conditional_min_criterion = 
-           conditional_min_criterion())#setting for the specification of the model what are the ranges of the hyperparameters that we want to fine tune
+  update(conditional_min_criterion = #"update()" comes from "recipes"
+           conditional_min_criterion()) #to set the nparam[+] for the "conditional_min_criterion" which was missing up to the previous pipe #setting for the specification of the model, what are the ranges of the hyperparameters that will be finetuned for each one of those hyperparameters
 
 cit_param 
-cit_param$object 
+
+cit_param$object #We can see what is the range that the model is gonna train for us #From the output, we see that "tree depth" is gonna test for 1 to 15 [i.e., having a tree depth of 1 layer only, to all the way to 15 layers; that's the default it is gonna test for us.]; "Transformer: prob-logis [0, 1]" means that the "conditional_min_criterion" is going from 0 to 1 
 
 ```
 
 Now, let's perform the search below.  
+
+[For elastic net, we created a fixed grid at this stage. But for CIT, we will do simulated annealing.]
 
 We will use an iterative search algorithm called **simulated annealing**.  
 
@@ -322,17 +343,17 @@ Here's how it works:
   
   - After a given number of iterations, the algorithm stops and provides a list of the best models and their hyperparameters.  
 
-In the algorithm below, we are asking for 50 iterations.  
+In the algorithm below, we are asking for 50 iterations [but dong at least 100 is recommended].  
 
 ```{r cit_grid_result}
 
 set.seed(76544)
 
-cit_grid_result <- tune_sim_anneal(
+cit_grid_result <- tune_sim_anneal( #"tune_sim_anneal()" function for simulated annealing
   object = cit_spec,
-  preprocessor = weather_recipe,
-  resamples = resampling_foldcv,
-  param_info = cit_param,
+  preprocessor = weather_recipe, #preprocessing our data using the recipe
+  resamples = resampling_foldcv, #to specify resampling strategy 
+  param_info = cit_param, #"cit_param" is the object for CIT engine-specific hyperparameters
   iter = 50
 )
 
