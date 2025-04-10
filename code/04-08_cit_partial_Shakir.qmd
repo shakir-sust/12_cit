@@ -57,7 +57,7 @@ Terminology:
   - **Internal node**: all intermediate nodes (e.g., Flag_Leaf_Fungi)    
   - **Leaf/terminal node**: the bottom nodes with the boxplots  
   
-Variables selected first (on top) are more important than variables selected afterwards. In this example, the most important variable in explaining grain yield is **Rain_Cum**.  
+Variables selected first (on top) are more important than variables selected afterwards. In this example, the most important variable in explaining grain yield is **Rain_Cum**.  c  
 
 [Very important note:
 Conditional inference tree model is not prone to multicollinearity because even though it is a multivariate analysis, it is doing variable selection on a bivariate relationship. So, it runs all bivariate relationships at each step and never runs a multivariate model in the sense that the predicted variable (e.g., fiber strength) is explained by all the predictor variables (e.g., all 73 weather variables). Instead, the predicted variable (fiber strength) is explained by each individual predictor variable separately, choosing the one with the lowest p-value, and then doing binary split. That is how this Conditional inference tree model remedies multicollinearity. Even though the ensamble of it is a multivariate model, but the individual pieces of the tree are all derived from a bivariate relationship.]
