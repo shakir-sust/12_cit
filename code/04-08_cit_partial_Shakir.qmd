@@ -589,7 +589,7 @@ Very important note: We see a larger RMSE on the test set (as compared to traini
 
 > You would expect all these ML models to have better fit metrics on the training set (because they already saw the train set data when they were being trained, so they had a chance to learn those patterns), and on the test set which are completely new data, the fit metrics in the test set would not probably be as good as the train set.
 
-Predicted vs. observed plot:   
+Predicted vs. observed plot: [regardless of how simple or complex the machine learning model is, we should always expect to see this "Predicted vs. observed plot"]
 
 ```{r}
 
@@ -605,11 +605,22 @@ final_fit %>%
 
 ```
 
+In this Predicted vs. observed plot, we notice 4 horizontal lines that are parallel to each other [we did not see any such parallel line patterns in the previous elastic net model]. 
+
 Why the 4 horizontal lines?  
+
+It's because how the trees work,  the tree basically formed 4 terminal nodes. That's why we see the 4 horizontal lines. 
 
 How can we get more horizontal lines in this type of algorithm?  
 
-Variable importance:  
+We will get more horizontal lines in this type of algorithm if the number of terminal nodes are more. 
+
+## Variable importance:   
+
+Very important note:
+
+Another plot that is very important to show in machine learning regardless of the type of machine learning model is the "variable importance plot", which for elastic net was the magnitude of the slope for each variable. Elastic net was a linear model with many x variables, and each of these x variables had a slope. So, the larger was the magnitude of the slope of a particular x variable, the greater was the importance of that particular variable in the model. For conditional inference tree, that is not how it works. For conditional inference tree, there is this iterative process for selecting one variable, and then doing a binary split [then again selecting anther variable, and then doing another binary  split]. And variables that come on top are more important than variable that come afterwards.  
+
 
 ```{r}
 
@@ -628,23 +639,49 @@ final_spec %>%
   labs(y = NULL)
     
 ```
+We see that only 3 variables show up in the variable importance plot: 
+1) mean_vp.pa_May [mean vapor pressure deficit in May]
+2) mean_srad.wm2_Aug [mean solar radiation in August]
+3) mean_dayl.s_Sep [mean day length in September]
+
+and anything else does not have any value of importance. 
+
+Why do you think that We see only 3 variables showing up in the variable importance plot?
+
+because those were the only variables that entered the model. None of the other variables entered the model, so they had no importance."mean_vp.pa_May" was the 1st variable to show up in the variable importance plot because it was the 1st variable to enter the model (i.e., it was the most important variable). The variable that comes up on top has more importance than the variables that comes afterwards (i.e., variable importance appear on chronological order in the variable importance plot).
 
 
 Tree:  
 
+One of the biggest pros of CIT (conditional inference tree) is that it gives you only 1 tree model that you can look and interpret, which is not gonna be the case for random forest.
+
 ```{r}
 
-final_spec %>%
+final_spec %>% #"final_spec" is where we trained the entire training set
   fit(strength_gtex ~ .,
-      data = bake(weather_prep, weather_train) #bake(weather_prep, weather): applies recipe to the entire training data
+      data = bake(weather_prep, weather_train) #bake(weather_prep, weather): to apply the recipe steps to the entire training data #now we bake the entire weather data, which means applying the "recipe" that we had initially applied to the training set
       ) %>%
-  .$fit %>%
-  plot() #plots the tree for us
+  .$fit %>% # the "." is for all the outcome before this pipe, we are subsampling the "final_spec" object by pulling out the "fit" from this model #to pull the "fit" component from the "final_spec" object
+  plot() #to plots the tree for us
 
-#weather_prep #trained data with recipe included in it
-#weather
+#weather_prep #trained data with the "recipe" (= data preprocessing) applied it
+#weather #the main data set that has all the rows (including training and testing data)
   
 ```
+How would you interpret this plot?
+
+The "mean_vp.pa_May" [mean vapor pressure deficit in May] had a higly significant p-value (p < 0.001) and therefore entered the model. And then it was split into 2 categories (<= 1576.1, > 1576.1). If the "mean_vp.pa_May" [mean vapor pressure deficit in May] was greater than 1576.1, we came to the right side on mean_srad.wm2_Aug [mean solar radiation in August]. If it was lower than 1576.1, we came to the left side on "Node 2". 
+
+Then, a new split happened on "mean_srad.wm2_Aug" [mean solar radiation in August] because it had a highly significant p-value (p < 0.001) to further split into 2 categories (<= 360.6, > 360.6). If the mean_srad.wm2_Aug [mean solar radiation in August] was less than 360.6, then we came to the left on "Node 4". If the mean_srad.wm2_Aug [mean solar radiation in August] was more than 360.6, then we came to the right on "mean_dayl.s_Sep" [mean day length in September].
+
+Then, a new split happened on "mean_dayl.s_Sep" [mean day length in September] because it had a highly significant p-value (p < 0.001) to further split into 2 categories (<= 43818.7, > 43818.7). If the "mean_dayl.s_Sep" [mean day length in September] was less than 43818.7, then we came to the left on "Node 6". If the "mean_dayl.s_Sep" [mean day length in September] was more than 43818.7, then we came to the right on "Node 7".
+
+
+( Variables that entered in the CIT model:
+1) mean_vp.pa_May [mean vapor pressure deficit in May]
+2) mean_srad.wm2_Aug [mean solar radiation in August]
+3) mean_dayl.s_Sep [mean day length in September] )
+
 
 **Therefore, solar radiation in July and vapor pressure in June were the most important variables affecting cotton fiber strength.**  
 
