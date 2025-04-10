@@ -57,7 +57,7 @@ Terminology:
   - **Internal node**: all intermediate nodes (e.g., Flag_Leaf_Fungi)    
   - **Leaf/terminal node**: the bottom nodes with the boxplots  
   
-Variables selected first (on top) are more important than variables selected afterwards. In this example, the most important variable in explaining grain yield is **Rain_Cum**.  c  
+Variables selected first (on top) are more important than variables selected afterwards. In this example, the most important variable in explaining grain yield is **Rain_Cum**.  
 
 [Very important note:
 Conditional inference tree model is not prone to multicollinearity because even though it is a multivariate analysis, it is doing variable selection on a bivariate relationship. So, it runs all bivariate relationships at each step and never runs a multivariate model in the sense that the predicted variable (e.g., fiber strength) is explained by all the predictor variables (e.g., all 73 weather variables). Instead, the predicted variable (fiber strength) is explained by each individual predictor variable separately, choosing the one with the lowest p-value, and then doing binary split. That is how this Conditional inference tree model remedies multicollinearity. Even though the ensamble of it is a multivariate model, but the individual pieces of the tree are all derived from a bivariate relationship.]
@@ -316,6 +316,8 @@ We need to create this object because engine-specific hyperparameters have a mis
 
 #tree_depth (maximum depth of the tree i.e., maximum layer of the tree; so we are basically allowing the tree to grow to different depths, and see which depth is gonna give us the best model), mincriterion (the value of (1 - p-value) that must be exceeded in order to implement a split), min_n (minimum number of data points in a node that are required for the node to be split further)
 
+#At this stage: For CIT, we were fine tuning the hyperparameters at the level of the engine, whereas elastic net had all the hyperparameters that we were fine tuning at the level of the model
+
 cit_param <- cit_spec %>%
   extract_parameter_set_dials() %>%
   update(conditional_min_criterion = #"update()" comes from "recipes"
@@ -326,6 +328,8 @@ cit_param
 cit_param$object #We can see what is the range that the model is gonna train for us #From the output, we see that "tree depth" is gonna test for 1 to 15 [i.e., having a tree depth of 1 layer only, to all the way to 15 layers; that's the default it is gonna test for us.]; "Transformer: prob-logis [0, 1]" means that the "conditional_min_criterion" is going from 0 to 1 
 
 ```
+
+[Very important note: For the above code chunk: For CIT, we were fine tuning the hyperparameters at the level of the engine, whereas elastic net had all the hyperparameters that we were fine tuning at the level of the model  ]
 
 Now, let's perform the search below.  
 
@@ -356,8 +360,11 @@ cit_grid_result <- tune_sim_anneal( #"tune_sim_anneal()" function for simulated 
   preprocessor = weather_recipe, #preprocessing our data using the recipe
   resamples = resampling_foldcv, #to specify resampling strategy 
   param_info = cit_param, #"cit_param" is the object for CIT engine-specific hyperparameters
-  iter = 50
+  iter = 50 #we are doing 50 iterations to save time in class, but for research we would do at least 100 iterations
 )
+
+#install.packages("beepr")
+beepr::beep() #for a code chunk that takes a lot of time to run, running "beepr::beep()" plays a beep when the chunk is started, and then finished
 
 cit_grid_result$.metrics[[2]]
 
@@ -386,9 +393,12 @@ cit_grid_result %>%
   labs(title = "RMSE")
 ```
 
-We want to minimize the RMSE (RMSE: lower is better).
+We want to minimize the RMSE. The lower the RMSE, the better. In the legend section of the above graph, the lowest RMSE is"3.00343891757471" which has a purple color, and we see the purple color dot is on 48 th iteration, which indicates that the lowest RMSE [= "3.00343891757471"] was obtained in the 48 th iteration.
 
 What tree_depth and min criterion values created lowest RMSE?  
+
+tree_depth = 3
+conditional_min_criterion = ~ 0.96
 
 Now, let's look into R2 (higher is better):  
 
@@ -411,31 +421,49 @@ cit_grid_result %>%
 
 We want to see higher R2 (R2: higher is better).
 
+We want to see a maximized R2. The higher the R2, the better. In the legend section of the above graph, the highest R2 is"0.0795034771578964" which has a yellow color, and we see the yellow colored dot is on 48 th iteration, which indicates that the highest R2 [= "0.0795034771578964"] was obtained in the 48 th iteration.
+
+What tree_depth and min criterion values created lowest RMSE?  
+
+tree_depth = 3
+conditional_min_criterion = ~ 0.96
+
 > Previously, we selected the single best model. Now, let's select the best model within one std error of the metric, so we choose a model among the top ones that is more parsimonious.  
 
 ```{r}
 
 # Based on lowest RMSE
 best_rmse <- cit_grid_result %>%
-  select_by_one_std_err("tree_depth",
-                        metric = "rmse"
+  select_by_one_std_err("tree_depth", #specifying the hyperparameter for which we want to select the best model within one std error
+                        metric = "rmse" #specifying the metric
                         )
 
 best_rmse
 
 ```
 
+Based on RMSE, we would choose 
+- tree_depth = 14
+- conditional_min_criterion = 0.9655238 [notice that p-value = 1 - conditional_min_criterion = 1 - 0.9655238 = 0.0344762]
+
 ```{r}
 
 # Based on greatest R2
 best_r2 <- cit_grid_result %>%
-  select_by_one_std_err("tree_depth",
-                        metric = "rsq"
+  select_by_one_std_err("tree_depth", #specifying the hyperparameter for which we want to select the best model within one std error
+                        metric = "rsq" #specifying the metric
                         )
 
 best_r2
 
 ```
+
+Based on R2, we would choose 
+- tree_depth = 14
+- conditional_min_criterion = 0.9655238 [notice that p-value = 1 - conditional_min_criterion = 1 - 0.9655238 = 0.0344762]
+
+[Note: It could be that RMSE and R2 give you the same combinations of hyperparameters that optimize both metrics -- it could be the case a lot of times. But it does not happen always -- maybe sometime you will get a differernt combinations of the hyperparameter values for RMSE as compared to R2.]
+
 Based on RMSE, we would choose [Dr. Bastos's got this answer, but I got a different one]     
   - tree_depth = 10     
   - conditional_min_criterion = 0.9926512  
@@ -444,14 +472,26 @@ Based on R2, we would choose [Dr. Bastos's got this answer, but I got a differen
   - tree_depth = 10  
   - conditional_min_criterion = 0.9926512  
 
+Based on RMSE, we would choose [I got this answer]
+- tree_depth = 14
+- conditional_min_criterion = 0.9655238
+
+Based on R2, we would choose [I got this answer]
+- tree_depth = 14
+- conditional_min_criterion = 0.9655238
+
+[Note: It could be that RMSE and R2 give you the same combinations of hyperparameters that optimize both metrics -- it could be the case a lot of times. But it does not happen always -- maybe sometime you will get a differernt combinations of the hyperparameter values for RMSE as compared to R2.]
+
 Let's use the hyperparameter values that optimized R2 to fit our final model.
 
 ```{r final_spec}
 
-final_spec <- decision_tree(tree_depth = best_r2$tree_depth) %>%
+#At this stage, we will use the fine tuned/ optimized R2 value to fit the model
+
+final_spec <- decision_tree(tree_depth = best_r2$tree_depth) %>% #notice that we are no longer using tree_depth = tune() (because we already fine tuned the values) and will use the fine tuned/ optimized value "tree_depth = best_r2$tree_depth"
   # Specify the engine
   set_engine("partykit",
-             conditional_min_criterion = best_r2$conditional_min_criterion) %>%
+             conditional_min_criterion = best_r2$conditional_min_criterion) %>% #notice that we are no longer using conditional_min_criterion = tune() (because we already fine tuned the values) and will use the fine tuned/ optimized value "conditional_min_criterion = best_r2$tree_depth"
   # Specifying mode  
   set_mode("regression")
   
@@ -475,12 +515,21 @@ final_fit <- last_fit(final_spec,
                 weather_recipe,
                 split = weather_split)
 
+#The "last_fit()" function does 2 things for us: 1) it applies the last model that we just fine tuned to the entire training set (which has not happened yet for this CIT exercise) 2) it uses then that model that apply to the entire training set to make predictions on the test set #this is the 1st time that the test set comes back at the very end #Notice that the training set was completely ignored in the training set 
+
 final_fit %>%
   collect_predictions()
 
+#Here when we collect predictions, we have 211 rows because the test set had 211 rows. Notice that we have a column for "strength_gtex" which contains the actual values for "strength_gtex" that were observed, and a ".pred" column that contains the predicted value that this model is giving/predicting
+
 ```
 
+The "last_fit()" function does 2 things for us: 
 
+1) it applies the last model that we just fine tuned to the entire training set (which has not happened yet for this CIT exercise). 
+
+2) it uses then that model that apply to the entire training set to make predictions on the test set #this is the 1st time that the test set comes back at the very end.
+Notice that the training set was completely ignored in the training set 
 
 Metrics on the **test set**:  
 
@@ -488,7 +537,11 @@ Metrics on the **test set**:
 final_fit %>%
   collect_metrics()
 ```
- The fit metrics on the test set really shows the predictive ability of our model.
+Very v-e-r-y important note to remember: *The fit metrics on the test set really shows the predictive ability of our model.* The fit metrics on the training set just give us an idea of how well the model fit our data. 
+ 
+ Test set fit metrics:
+ - RMSE = 3.11734102	
+ - R2 = 0.08138124	
 
 Metrics on **train set** (for curiosity and compare to test set):  
 
@@ -518,7 +571,23 @@ final_spec %>%
 
 ```
 
-How does metrics on test compare to metrics on train?  
+ Training set fit metrics:
+ - RMSE = 2.8601998		
+ - R2 = 0.1492775	
+
+> How does metrics on test compare to metrics on train?  
+
+ Test set fit metrics:
+ - RMSE = 3.11734102	
+ - R2 = 0.08138124	
+ 
+ Training set fit metrics:
+ - RMSE = 2.8601998		
+ - R2 = 0.1492775	 
+
+Very important note: We see a larger RMSE on the test set (as compared to training set), and a lower R2 on the test set (as compared to training set) [RMSE: lower the better; R2: higher the better]. That is, we see better fit metrics in the training set than those of the test set. This is very typical, because it would make sense that our model predicting better the data it has already seen during training , 
+
+> You would expect all these ML models to have better fit metrics on the training set (because they already saw the train set data when they were being trained, so they had a chance to learn those patterns), and on the test set which are completely new data, the fit metrics in the test set would not probably be as good as the train set.
 
 Predicted vs. observed plot:   
 
