@@ -384,7 +384,7 @@ cit_grid_result %>%
   labs(title = "RMSE")
 ```
 
-We want to minimize the RMSE.
+We want to minimize the RMSE (RMSE: lower is better).
 
 What tree_depth and min criterion values created lowest RMSE?  
 
@@ -407,34 +407,45 @@ cit_grid_result %>%
 
 ```
 
+We want to see higher R2 (R2: higher is better).
+
 > Previously, we selected the single best model. Now, let's select the best model within one std error of the metric, so we choose a model among the top ones that is more parsimonious.  
 
 ```{r}
+
 # Based on lowest RMSE
-best_rmse <- cit_grid_result 
+best_rmse <- cit_grid_result %>%
+  select_by_one_std_err("tree_depth",
+                        metric = "rmse"
+                        )
 
 best_rmse
 
 ```
 
 ```{r}
+
 # Based on greatest R2
-best_r2 <- cit_grid_result 
+best_r2 <- cit_grid_result %>%
+  select_by_one_std_err("tree_depth",
+                        metric = "rsq"
+                        )
 
 best_r2
 
 ```
-Based on RMSE, we would choose   
-  - tree_depth = 10   
-  - conditional_min_criterion = 0.9926512
+Based on RMSE, we would choose [Dr. Bastos's got this answer, but I got a different one]     
+  - tree_depth = 10     
+  - conditional_min_criterion = 0.9926512  
 
-Based on R2, we would choose   
-  - tree_depth = 10
-  - conditional_min_criterion = 0.9926512
+Based on R2, we would choose [Dr. Bastos's got this answer, but I got a different one]     
+  - tree_depth = 10  
+  - conditional_min_criterion = 0.9926512  
 
 Let's use the hyperparameter values that optimized R2 to fit our final model.
 
 ```{r final_spec}
+
 final_spec <- decision_tree(tree_depth = best_r2$tree_depth) %>%
   # Specify the engine
   set_engine("partykit",
@@ -444,6 +455,7 @@ final_spec <- decision_tree(tree_depth = best_r2$tree_depth) %>%
   
 
 final_spec
+
 ```
 
 ## 3. Validation  
