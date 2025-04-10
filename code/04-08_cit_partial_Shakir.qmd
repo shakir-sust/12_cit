@@ -3,6 +3,8 @@ title: "Conditional inference tree"
 format: html
 ---
 
+## Will come in exam: What are the pros and cons of CIT?
+
 # Learning objectives  
 Our learning objectives are to:  
   - Understand conditional inference tree (cit) algorithm 
@@ -462,28 +464,36 @@ final_spec
 Now that we determined our best model, let's do our **last fit**.
 
 This means 2 things:  
-  - Traninig the optimum hyperparameter values on the **entire training set**  
+  - Training the optimum hyperparameter values on the **entire training set**  
   - Using it to **predict** on the **test set**  
 
 These 2 steps can be completed in one function, as below:  
 
 ```{r final_fit}
+
 final_fit <- last_fit(final_spec,
                 weather_recipe,
                 split = weather_split)
 
 final_fit %>%
   collect_predictions()
+
 ```
 
-Metrics on the **test set**:
+
+
+Metrics on the **test set**:  
+
 ```{r}
 final_fit %>%
   collect_metrics()
 ```
+ The fit metrics on the test set really shows the predictive ability of our model.
 
 Metrics on **train set** (for curiosity and compare to test set):  
+
 ```{r}
+
 # RMSE
 final_spec %>%
   fit(strength_gtex ~ .,
@@ -507,10 +517,13 @@ final_spec %>%
   )
 
 ```
+
 How does metrics on test compare to metrics on train?  
 
-Predicted vs. observed plot:  
+Predicted vs. observed plot:   
+
 ```{r}
+
 final_fit %>%
   collect_predictions() %>%
   ggplot(aes(x = strength_gtex,
@@ -520,16 +533,20 @@ final_fit %>%
   geom_smooth(method = "lm") +
   scale_x_continuous(limits = c(20, 40)) +
   scale_y_continuous(limits = c(20, 40)) 
+
 ```
+
 Why the 4 horizontal lines?  
 
 How can we get more horizontal lines in this type of algorithm?  
 
 Variable importance:  
+
 ```{r}
+
 final_spec %>%
   fit(strength_gtex ~ .,
-         data = bake(weather_prep, weather)) %>%
+         data = bake(weather_prep, weather_train)) %>%
     vi() %>%
   mutate(
     Variable = fct_reorder(Variable, 
@@ -542,10 +559,21 @@ final_spec %>%
   labs(y = NULL)
     
 ```
+
+
 Tree:  
 
 ```{r}
 
+final_spec %>%
+  fit(strength_gtex ~ .,
+      data = bake(weather_prep, weather_train) #bake(weather_prep, weather): applies recipe to the entire training data
+      ) %>%
+  .$fit %>%
+  plot() #plots the tree for us
+
+#weather_prep #trained data with recipe included in it
+#weather
   
 ```
 
@@ -569,5 +597,7 @@ In this exercise, we covered:
   - Used both R2 and RMSE as the metrics to select best model  
   - Once final model was determined, used it to predict **test set**  
   - Evaluated it with predicted vs. observed plot, R2 and RMSE metrics, variable importance, and tree plot    
+  
+## Will come in exam: what are the pros and cons of CIT?
   
 
