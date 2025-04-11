@@ -738,10 +738,10 @@ In this exercise, we covered:
   - Set up a ML workflow to train an cit model  
   - Used `recipes` to process data
   - Used `rsamples` to split data  
-  - Used **iterative search** to find the best values for mas_depth and min_criterion    
-  - Used 10-fold cross validation as the resampling method  
+  - Used **iterative search** to find the best values for max_depth and min_criterion    
+  - Used 10-fold cross validation as the resampling method  [to train the model on the training set by further splitting it into folds, and each fold having a training and assessment set]
   - Used both R2 and RMSE as the metrics to select best model  
-  - Once final model was determined, used it to predict **test set**  
+  - Once final model was determined, used it to predict **test set** [to explore variable importance, and especially we created and examined the decison tree plot; For random forest, we will not have a tree plot, because random forest does not have a single model to interpret ] 
   - Evaluated it with predicted vs. observed plot, R2 and RMSE metrics, variable importance, and tree plot    
   
 ## Will come in exam: what are the pros and cons of CIT?
