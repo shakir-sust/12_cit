@@ -621,6 +621,7 @@ For all of the 4 conditions(/combinations) in this tree (e.g., "mean_vp.pa_May" 
 
 We will get more horizontal lines in this type of algorithm if the number of terminal nodes are more. 
 
+
 ## Variable importance:   
 
 Very important note:
@@ -674,6 +675,8 @@ final_spec %>% #"final_spec" is where we trained the entire training set
 #weather #the main data set that has all the rows (including training and testing data)
   
 ```
+The tree plot for only the training data is seen above. Dr. Bastos said that this is the best practice: to make the tree plot based on the training data.
+
 
 ```{r recipe baked on the entire "weather" data set}
 
@@ -689,7 +692,18 @@ final_spec %>% #"final_spec" is where we trained the entire training set
   
 ```
 
-One of the limitations of this model is that it is highly sensitive to the data we use, and therefore we would get a different model whether we are creating the final tree plot just on the train set (= "weather_train"; yields 4 terminal nodes on the tree map), or on the whole (entire) data set (entirety of the training and testing set together = "weather" which yields 3 terminal nodes in ther tree map). 
+[ Ask  Dr. Bastos: 
+In CIT, what is the standard practice when it comes to baking recipe? Should we bake the recipe to the training data [ bake(weather_prep, weather_train) ], or should we bake the recipe to the whole "weather" data set that contains both the training and testing data  [ bake(weather_prep, weather) ]? ]
+
+The tree plot for the whole "weather" data (that contains both the training and testing data) is seen above. 
+
+Dr. Bastos said that sometimes people like to see the tree plot based on the whole data. But as a best practice, we should use the training data to plot the tree. 
+
+As we can see, the tree plot with only the training data (baked for recipe) had 3 predictor variables in the tree (mean_vp.pa_May [mean vapor pressure deficit in May], mean_srad.wm2_Aug [mean solar radiation in August], mean_dayl.s_Sep [mean day length in September] ), whereas the tree plot with the entire "weather" data baked for recipe had 2 predictor variables in the tree ("mean_srad.wm2_Jul" [mean solar radiation in July], "mean_vp.pa_Jun" [mean vapor pressure deficit in June]
+
+One of the limitations of this model is that CIT model is highly sensitive to the data we use to train it, and therefore we would get a different model whether we are creating the final tree plot just on the train set (= "weather_train"; yields 4 terminal nodes on the tree map), or on the whole (entire) data set (entirety of the training and testing set together = "weather" which yields 3 terminal nodes in ther tree map). Another thing which is very important to notice that the model with only the training data baked with the recipe in it gives (three) different predictor variables (3 predictor variables in the tree: mean_vp.pa_May [mean vapor pressure deficit in May], mean_srad.wm2_Aug [mean solar radiation in August], mean_dayl.s_Sep [mean day length in September] ) that are different than the predictor variables (2 predictor variables in the tree: "mean_srad.wm2_Jul", "mean_vp.pa_jun") with the whole "weather" data set (containing both training and test sets) baked with the recipe in it.
+
+Again: One of the limitations of the CIT model is that CIT model is highly sensitive to the data we use to train it. So, maybe if we come back and collect more data next year and use these data to update the model, it will most likely give a different model in the end (which is a limitation). We do want model that are more robust (that they will get updated and improve over time, but will not switch the model back and forth every time we bring in slightly new data. )  
 
 In other words, we would get a different tree map if we bake the recipe on the training data [ bake(weather_prep, weather_train) ] as compared to the tree map if we bake the recipe on the whole (entire) data set containing both training and testing data sets [ bake(weather_prep, weather) ]. 
 
@@ -703,7 +717,7 @@ Then, a new split happened on "mean_dayl.s_Sep" [mean day length in September] b
 
 On the y-axis of the terminal node [Node 2, Node 4, Node 6, Node 7] is "strength_gtex". By looking at these boxplots, it seems like the highest mean strength was observed at Node 4 [because the median of the boxplot at Node 4 are higher than the others] when we have "mean_vp.pa_May" [mean vapor pressure deficit in May] greater than 1576.1 and "mean_srad.wm2_Aug" [mean solar radiation in August] less than 360.6. Then, we observed lower mean strength than the boxplot on Node 4 for all other conditions. 
 
-For all of the 4 conditions(/combinations) in this tree (e.g., "mean_vp.pa_May" <= 1576.1 -> Node2; "mean_vp.pa_May" > 1576.1 -> "mean_srad.wm2_Aug" <= 360.6 -> Node 4; "mean_vp.pa_May"  > 1576.1 -> "mean_srad.wm2_Aug" > 360.6 -> "mean_dayl.s_Sep" <= Node 6; "mean_vp.pa_May"  > 1576.1 -> "mean_srad.wm2_Aug" > 360.6 -> "mean_dayl.s_Sep" > 43818.7 -> Node 7 ), the predicted value that the model gives is the mean of the boxplot for each of the terminal nodes. Even though the data distribution of the boxplot is the distribution on the training set data of the variables that fell into a particular condition/combination of the tree, but when we use the model to make a prediction,  it will predict the man of the boxplot for each one of those terminal nodes. That's we see the 4 streaks of parallel lines on the perdicted vs. observed plot.
+For all of the 4 conditions(/combinations) in this tree (e.g., "mean_vp.pa_May" <= 1576.1 -> Node2; "mean_vp.pa_May" > 1576.1 -> "mean_srad.wm2_Aug" <= 360.6 -> Node 4; "mean_vp.pa_May"  > 1576.1 -> "mean_srad.wm2_Aug" > 360.6 -> "mean_dayl.s_Sep" <= Node 6; "mean_vp.pa_May"  > 1576.1 -> "mean_srad.wm2_Aug" > 360.6 -> "mean_dayl.s_Sep" > 43818.7 -> Node 7 ), the predicted value that the model gives is the mean of the boxplot for each of the terminal nodes. Even though the data distribution of the boxplot is the distribution on the training set data of the variables that fell into a particular condition/combination of the tree, but when we use the model to make a prediction,  it will predict the man of the boxplot for each one of those terminal nodes. That's we see the 4 streaks of parallel lines on the predicted vs. observed plot.
 
 > Why do we have only 3 variables ( mean_vp.pa_May [mean vapor pressure deficit in May], mean_srad.wm2_Aug [mean solar radiation in August], mean_dayl.s_Sep [mean day length in September] ) "variable importance plot"?
 
