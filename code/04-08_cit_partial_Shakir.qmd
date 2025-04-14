@@ -393,12 +393,11 @@ cit_grid_result %>%
   labs(title = "RMSE")
 ```
 
-We want to minimize the RMSE. The lower the RMSE, the better. In the legend section of the above graph, the lowest RMSE is"3.00343891757471" which has a purple color, and we see the purple color dot is on 48 th iteration, which indicates that the lowest RMSE [= "3.00343891757471"] was obtained in the 48 th iteration.
+We want to minimize the RMSE. The lower the RMSE, the better. In the legend section of the RMSE grid plot seen above, the lowest RMSE is"3.00343891757471" which has a purple color, and we see the purple color dot is on 48 th iteration, which indicates that the lowest RMSE [= "3.00343891757471"] was obtained in the 48 th iteration.
 
 What tree_depth and min criterion values created lowest RMSE?  
 
-tree_depth = 3
-conditional_min_criterion = ~ 0.96
+tree_depth = 3; conditional_min_criterion = ~ 0.96 [when we have 50 iterations]
 
 Now, let's look into R2 (higher is better):  
 
@@ -421,7 +420,7 @@ cit_grid_result %>%
 
 We want to see higher R2 (R2: higher is better).
 
-We want to see a maximized R2. The higher the R2, the better. In the legend section of the above graph, the highest R2 is"0.0795034771578964" which has a yellow color, and we see the yellow colored dot is on 48 th iteration, which indicates that the highest R2 [= "0.0795034771578964"] was obtained in the 48 th iteration.
+We want to see a maximized R2. The higher the R2, the better. In the legend section of the R2 grid plot seen above, the highest R2 is"0.0795034771578964" which has a yellow color, and we see the yellow colored dot is on 48 th iteration, which indicates that the highest R2 [= "0.0795034771578964"] was obtained in the 48 th iteration.
 
 What tree_depth and min criterion values created lowest RMSE?  
 
